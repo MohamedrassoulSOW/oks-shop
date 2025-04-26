@@ -1,0 +1,87 @@
+{% extends 'base.html.twig' %}
+
+
+{% block body %}
+
+    <div class="container my-5">
+        <h1>Espace membre privé !</h1>
+
+        <div class="row">
+            <div class="col-md-3">
+                {% include 'account/_menu.html.twig' %}
+            </div>
+            <div class="col-md-9">
+                <small><a href="{{ path('app_account') }}" class="btn btn-light btn-sm" alt="">Retour</a></small>
+                <h4 class="mt-4">Ma  commande N°{{ order.id }}</h4>
+                <span> Passer le : {{ order.createdAt|date('d/m/y') }} </span></br>
+                {{ include('admin/state.html.twig', { field : { 'value' : order.state } }) }}
+                </br> 
+                <span> Stripe Session id : {{ order.stripeSessionId() }} </span></br>
+                <hr>
+                <div class="row my-4">
+                    <div class="col-md-6">
+                        <strong class=" mb-2"> Adresse de livraison </strong></br>
+                        {{ order.delivery|raw }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong class=" mb-2"> Transporteur </strong></br>
+                        {{ order.carrierName }}
+                    </div>
+                </div> 
+                <hr>
+
+                <strong class=" mb-2"> Le contenu de la commande : </strong></br>
+
+                <table class="table">
+                <thead>
+                    <tr>
+                    <th scope="col">Illustration</th>
+                    <th scope="col">Nom du produit</th>
+                    <th scope="col">Quantité</th>
+                    <th scope="col">Prix ut=nitaire H.T</th>
+                    <th scope="col">TVA</th>
+                    <th scope="col">Total T.T.C</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in order.orderDetails %}
+                        <tr>
+                            <td>
+                                <img src="/uploads/{{ product.productIllustration }}" width="100px" alt="">
+                            </td>
+                            <td> {{ product.productName }} </td>
+                            <td> {{ product.productQuantity }} </td>
+                            <td> {{ product.productPrice|price }} </td>
+                            <td> {{ product.productTva }}% </td>
+                            {% set coeff = 1 + (product.productTva / 100) %}
+
+                            <td> {{ ((product.productPrice * coeff) * product.productQuantity)|price }} </td>
+                        </tr>
+                    {% endfor %}
+                    <tr>
+                        <td></td>
+                        <td> {{ order.carrierName }} </td>
+                        <td>1</td>
+                        <td></td>
+                        <td> {{ order.carrierPrice|price }} </td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <div class="text-right fs-5">
+                    <strong>Total TVA : 
+                        {#
+                            Calcule la TVA totale en prenant en compte la quantité pour chaque produit
+                        #}
+                        {{ order.orderDetails | reduce((total, product) => total + ((product.productPrice * product.productTva / 100) * product.productQuantity), 0) | price }}
+                    </strong></br>
+                    <strong>Total H.T : {{ (order.totalwt - (order.orderDetails | reduce((total, product) => total + ((product.productPrice * product.productTva / 100) * product.productQuantity), 0))) | price }}</strong></br>
+                    <strong>Total T.T.C : {{ order.totalwt | price }}</strong></br>
+                </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+{% endblock %}
